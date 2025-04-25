@@ -1,6 +1,5 @@
 import 'dart:typed_data';
-import 'dart:html' as html;
-import 'dart:io' show Platform;
+import 'package:web/web.dart' as web;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -209,16 +208,17 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
       pageFormat: _effectivePageFormat,
     );
 
-    if (kIsWeb) {
-      final blob = html.Blob([bytes], 'application/pdf');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', 'certificate.pdf')
-        ..click();
-      html.Url.revokeObjectUrl(url);
-    } else {
-      await Printing.layoutPdf(onLayout: (format) async => bytes);
-    }
+    // if (kIsWeb) {
+    //   final blob = web.Blob([web.JSArray<int>.from(bytes)], 'application/pdf');
+    //   final url = web.URL.createObjectURL(blob);
+    //   final anchor = web.AnchorElement()
+    //     ..href = url
+    //     ..setAttribute('download', 'certificate.pdf')
+    //     ..click();
+    //   web.URL.revokeObjectURL(url);
+    // } else {
+    //   await Printing.layoutPdf(onLayout: (format) async => bytes);
+    // }
   }
 
   Widget _certificatePreview({
@@ -367,6 +367,13 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
               }
             },
             child: const Text('Download'),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, "/supabase_console");
+            },
+            child: const Text('Supabase Console'),
           ),
         ],
       ),
