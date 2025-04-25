@@ -1,11 +1,12 @@
 import 'dart:typed_data';
+import 'dart:html' as html;
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
-import 'dart:html' as html;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:pdf/pdf.dart' as pd;
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 export 'dart:io' show Platform;
@@ -27,20 +28,20 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
 
   bool showCertificate = false;
 
-  PdfPageFormat _selectedPageFormat = PdfPageFormat.a4;
+  pd.PdfPageFormat _selectedPageFormat = pd.PdfPageFormat.a4;
   String _selectedOrientation = 'Portrait';
 
-  final Map<String, PdfPageFormat> _pageFormats = {
-    'A4': PdfPageFormat.a4,
-    'Letter': PdfPageFormat.letter,
+  final Map<String, pd.PdfPageFormat> _pageFormats = {
+    'A4': pd.PdfPageFormat.a4,
+    'Letter': pd.PdfPageFormat.letter,
   };
 
   final List<String> _orientations = ['Portrait', 'Landscape'];
 
-  PdfPageFormat get _effectivePageFormat {
+  pd.PdfPageFormat get _effectivePageFormat {
     final base = _selectedPageFormat;
     // if (_selectedOrientation == 'Landscape') {
-    return PdfPageFormat(base.height, base.width);
+    return pd.PdfPageFormat(base.height, base.width);
     // }
     // return base;
   }
@@ -59,47 +60,134 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
     required String course,
     required String date,
     required String id,
-    required PdfPageFormat pageFormat,
+    required pd.PdfPageFormat pageFormat,
   }) async {
     final pdf = pw.Document();
+
+    final templateImageData =
+        await rootBundle.load('assets/template/certi_temp4.png');
+    final templateImageBytes = templateImageData.buffer.asUint8List();
+    final templateImageProvider = pw.MemoryImage(templateImageBytes);
+
     pdf.addPage(
       pw.Page(
         pageFormat: pageFormat,
-        build: (pw.Context context) => pw.Center(
-          child: pw.Container(
-            width: pageFormat.width,
-            height: pageFormat.height,
-            // width: MediaQuery.of(context).size.width > 700 ? 350 : 300,
-            padding: const pw.EdgeInsets.all(24),
-            margin: const pw.EdgeInsets.all(24),
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: PdfColor.fromInt(0xFFCCCCCC)),
-              borderRadius: pw.BorderRadius.circular(16),
-            ),
-            child: pw.Column(
-              mainAxisSize: pw.MainAxisSize.min,
-              children: [
-                pw.Text('Service Report',
-                    style: pw.TextStyle(
-                        fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 24),
-                pw.Text('This is to certify that',
-                    style: pw.TextStyle(fontSize: 16)),
-                pw.SizedBox(height: 8),
-                pw.Text(name,
-                    style: pw.TextStyle(
-                        fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                    'has completed all inspections and repairs of raptee T30',
-                    style: pw.TextStyle(fontSize: 16)),
-                pw.SizedBox(height: 8),
-                pw.Text(course, style: pw.TextStyle(fontSize: 18)),
-                pw.SizedBox(height: 16),
-                pw.Text('Date: $date', style: pw.TextStyle(fontSize: 14)),
-                pw.Text('ID: $id', style: pw.TextStyle(fontSize: 14)),
-              ],
-            ),
+        build: (pw.Context context) => pw.FullPage(
+          ignoreMargins: true,
+          child: pw.Stack(
+            children: [
+              pw.Positioned.fill(
+                child: pw.Image(templateImageProvider, fit: pw.BoxFit.fitWidth),
+              ),
+              pw.Center(
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(32),
+                  margin: const pw.EdgeInsets.all(32),
+                  child: pw.Column(
+                    mainAxisSize: pw.MainAxisSize.min,
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.SizedBox(height: 60),
+                      pw.Text(
+                        'Bike Service Report',
+                        style: pw.TextStyle(
+                          fontSize: 40,
+                          fontWeight: pw.FontWeight.bold,
+                          color: pd.PdfColor.fromInt(0xFF2E3A59),
+                        ),
+                      ),
+                      pw.SizedBox(height: 32),
+                      pw.Text(
+                        'This certificate is proudly presented to',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontStyle: pw.FontStyle.italic,
+                          color: pd.PdfColor.fromInt(0xFF555555),
+                        ),
+                      ),
+                      pw.SizedBox(height: 18),
+                      pw.Text(
+                        name,
+                        style: pw.TextStyle(
+                          fontSize: 32,
+                          fontWeight: pw.FontWeight.bold,
+                          color: pd.PdfColor.fromInt(0xFF1A237E),
+                        ),
+                      ),
+                      pw.SizedBox(height: 68),
+                      pw.Text(
+                        'for successfully completing the service and inspection of',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          color: pd.PdfColor.fromInt(0xFF555555),
+                        ),
+                      ),
+                      pw.SizedBox(height: 10),
+                      pw.Text(
+                        course,
+                        style: pw.TextStyle(
+                          fontSize: 22,
+                          fontWeight: pw.FontWeight.bold,
+                          color: pd.PdfColor.fromInt(0xFF1565C0),
+                        ),
+                      ),
+                      // pw.SizedBox(height: 28),
+                      pw.Divider(
+                          height: 0.5,
+                          thickness: 0.3,
+                          color: pd.PdfColor.fromInt(0xFF757575)),
+                      pw.SizedBox(height: 18),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                        children: [
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                'Date:',
+                                style: pw.TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                              pw.Text(
+                                date,
+                                style: pw.TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                'Certificate ID:',
+                                style: pw.TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                              pw.Text(
+                                id,
+                                style: pw.TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      pw.SizedBox(height: 50),
+                      pw.Text(
+                        'Thank you for your dedication and professionalism!',
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontStyle: pw.FontStyle.italic,
+                          color: pd.PdfColor.fromInt(0xFF757575),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -122,7 +210,6 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
     );
 
     if (kIsWeb) {
-      // Web download using dart:html
       final blob = html.Blob([bytes], 'application/pdf');
       final url = html.Url.createObjectUrlFromBlob(blob);
       final anchor = html.AnchorElement(href: url)
@@ -130,7 +217,6 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
         ..click();
       html.Url.revokeObjectUrl(url);
     } else {
-      // Native platforms
       await Printing.layoutPdf(onLayout: (format) async => bytes);
     }
   }
@@ -176,7 +262,7 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
 
     if (showCertificate) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Certificate Generator')),
+        appBar: AppBar(title: const Text('Testing Certificate Generator')),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: _certificatePreview(
@@ -195,7 +281,7 @@ class _CertificateGeneratorPageState extends State<CertificateGeneratorPage> {
       child: ListView(
         shrinkWrap: true,
         children: [
-          DropdownButtonFormField<PdfPageFormat>(
+          DropdownButtonFormField<pd.PdfPageFormat>(
             value: _selectedPageFormat,
             decoration: const InputDecoration(labelText: 'Page Size'),
             items: _pageFormats.entries
